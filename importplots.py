@@ -40,7 +40,7 @@ def create_plots_table(cur, conn):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             movie_id INTEGER UNIQUE,
             plot_summary TEXT,
-            FOREIGN KEY (movie_id) REFERENCES True_Story_Movies(id)
+            FOREIGN KEY (movie_id) REFERENCES Movies(id)
         )
     ''')
     conn.commit()
@@ -207,7 +207,7 @@ def populate_plots_table(cur, conn, limit=25):
     # Get movies that don't have plots yet OR have NULL plot summaries
     cur.execute('''
         SELECT id, title
-        FROM True_Story_Movies
+        FROM Movies
         WHERE id NOT IN (SELECT movie_id FROM Plots WHERE plot_summary IS NOT NULL)
         LIMIT ?
     ''', (limit,))
@@ -245,7 +245,7 @@ def populate_plots_table(cur, conn, limit=25):
     # Show progress
     cur.execute('SELECT COUNT(*) FROM Plots WHERE plot_summary IS NOT NULL')
     total_processed = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(*) FROM True_Story_Movies')
+    cur.execute('SELECT COUNT(*) FROM Movies')
     total_movies = cur.fetchone()[0]
     print(f"Total progress: {total_processed}/{total_movies} movies have plots.")
 

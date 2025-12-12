@@ -1,0 +1,234 @@
+============================================================
+TRUE STORY MOVIE SUBJECT ANALYSIS - CALCULATIONS
+============================================================
+
+TOTAL MOVIES ANALYZED: 243
+============================================================
+
+1. COUNT OF MOVIES BY SUBJECT CATEGORY
+------------------------------------------------------------
+Criminals: 93 movies
+Military: 59 movies
+Athletes: 33 movies
+Musicians: 27 movies
+Scientists: 12 movies
+Artists & Writers: 6 movies
+Other: 5 movies
+Politicians: 3 movies
+Entertainers: 3 movies
+Businesspeople: 2 movies
+
+2. SUBJECT CATEGORIES WITH MOST COMMON MOVIE GENRES
+------------------------------------------------------------
+Note: Movies with multiple genres are counted in each genre bucket separately.
+
+
+Artists & Writers:
+  Drama: 5 movies
+  History: 3 movies
+  Adventure: 2 movies
+  Action: 1 movies
+  Music: 1 movies
+  Romance: 1 movies
+  Thriller: 1 movies
+
+Athletes:
+  Drama: 31 movies
+  History: 11 movies
+  Action: 6 movies
+  Adventure: 3 movies
+  Crime: 3 movies
+  Comedy: 2 movies
+  War: 2 movies
+  Documentary: 1 movies
+  Family: 1 movies
+  Music: 1 movies
+  Romance: 1 movies
+
+Businesspeople:
+  Drama: 2 movies
+  Adventure: 1 movies
+  Comedy: 1 movies
+  Fantasy: 1 movies
+  Romance: 1 movies
+
+Criminals:
+  Drama: 77 movies
+  History: 32 movies
+  Action: 29 movies
+  War: 27 movies
+  Crime: 23 movies
+  Thriller: 23 movies
+  Adventure: 12 movies
+  Romance: 9 movies
+  Comedy: 3 movies
+  Family: 3 movies
+  TV Movie: 3 movies
+  Western: 3 movies
+  Mystery: 2 movies
+  Animation: 1 movies
+  Fantasy: 1 movies
+  Horror: 1 movies
+  Music: 1 movies
+
+Entertainers:
+  Drama: 3 movies
+  Family: 1 movies
+
+Military:
+  Drama: 54 movies
+  History: 32 movies
+  Romance: 13 movies
+  War: 12 movies
+  Action: 9 movies
+  Adventure: 5 movies
+  Comedy: 4 movies
+  Family: 4 movies
+  Thriller: 4 movies
+  Animation: 1 movies
+  Crime: 1 movies
+  Documentary: 1 movies
+  Fantasy: 1 movies
+  TV Movie: 1 movies
+  Western: 1 movies
+
+Musicians:
+  Drama: 25 movies
+  Music: 6 movies
+  Comedy: 5 movies
+  History: 5 movies
+  Romance: 4 movies
+  Thriller: 4 movies
+  Adventure: 3 movies
+  War: 3 movies
+  Action: 2 movies
+  Crime: 1 movies
+  Documentary: 1 movies
+  Horror: 1 movies
+  Western: 1 movies
+
+Other:
+  Drama: 5 movies
+  History: 2 movies
+  Comedy: 1 movies
+  Crime: 1 movies
+  Romance: 1 movies
+
+Politicians:
+  Drama: 3 movies
+  Romance: 2 movies
+  History: 1 movies
+
+Scientists:
+  Drama: 10 movies
+  Thriller: 3 movies
+  Adventure: 2 movies
+  History: 2 movies
+  Comedy: 1 movies
+  Fantasy: 1 movies
+  Romance: 1 movies
+  War: 1 movies
+
+3. AVERAGE REVENUE BY SUBJECT CATEGORY (in millions USD)
+------------------------------------------------------------
+Other: $142.36M (based on 3 movies)
+Musicians: $127.51M (based on 22 movies)
+Military: $114.27M (based on 49 movies)
+Criminals: $96.09M (based on 72 movies)
+Athletes: $81.94M (based on 29 movies)
+Artists & Writers: $80.57M (based on 5 movies)
+Businesspeople: $79.03M (based on 2 movies)
+Scientists: $78.70M (based on 8 movies)
+Entertainers: $43.90M (based on 3 movies)
+Politicians: $21.64M (based on 3 movies)
+
+4. GENRE DISTRIBUTION BY DECADE
+------------------------------------------------------------
+Note: Movies with multiple genres are counted in each genre bucket separately.
+
+
+1940s:
+  Action: 1 movies
+  Crime: 1 movies
+  Drama: 1 movies
+
+1960s:
+  Drama: 2 movies
+  Animation: 1 movies
+  Documentary: 1 movies
+  Mystery: 1 movies
+  War: 1 movies
+
+1970s:
+  Drama: 3 movies
+  War: 2 movies
+  Action: 1 movies
+  Adventure: 1 movies
+  Animation: 1 movies
+  Documentary: 1 movies
+  Family: 1 movies
+  Fantasy: 1 movies
+  Music: 1 movies
+  TV Movie: 1 movies
+
+1980s:
+  Drama: 2 movies
+  Adventure: 1 movies
+  Romance: 1 movies
+
+1990s:
+  Action: 2 movies
+  Drama: 2 movies
+  Crime: 1 movies
+  TV Movie: 1 movies
+  Thriller: 1 movies
+
+2000s:
+  Drama: 97 movies
+  History: 43 movies
+  War: 22 movies
+  Action: 20 movies
+  Romance: 20 movies
+  Crime: 14 movies
+  Adventure: 12 movies
+  Thriller: 11 movies
+  Music: 7 movies
+  Comedy: 4 movies
+  Western: 3 movies
+  Family: 2 movies
+  TV Movie: 2 movies
+  Fantasy: 1 movies
+  Horror: 1 movies
+  Mystery: 1 movies
+
+2010s:
+  Drama: 109 movies
+  History: 45 movies
+  Thriller: 23 movies
+  Action: 22 movies
+  War: 21 movies
+  Adventure: 14 movies
+  Crime: 13 movies
+  Comedy: 12 movies
+  Romance: 11 movies
+  Family: 5 movies
+  Western: 2 movies
+  Fantasy: 1 movies
+  Horror: 1 movies
+  Music: 1 movies
+
+2020s:
+  Drama: 5 movies
+  History: 2 movies
+  Action: 1 movies
+  Adventure: 1 movies
+  Comedy: 1 movies
+  Documentary: 1 movies
+  Family: 1 movies
+  Fantasy: 1 movies
+  Romance: 1 movies
+  Thriller: 1 movies
+
+============================================================
+END OF CALCULATIONS
+============================================================

@@ -120,7 +120,8 @@ def get_true_story_movies():
 
 def populate_true_story_movies_table(cur, conn, true_story_movies):
     """
-    Populates the True_Story_Movies table in the database with movie titles.
+    Populates the Movies table in the database with movie titles.
+    (Deprecated function name kept for compatibility)
 
     Parameters
     -----------------------
@@ -131,14 +132,10 @@ def populate_true_story_movies_table(cur, conn, true_story_movies):
     true_story_movies: List of str
         A list of movie titles based on true stories.
     """
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS True_Story_Movies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT UNIQUE
-        )
-    ''')
+    # Now uses Movies table instead of creating duplicate True_Story_Movies
+    setup_movies_table(cur, conn)
     for movie in true_story_movies:
-        cur.execute('INSERT OR IGNORE INTO True_Story_Movies (title) VALUES (?)', (movie,))
+        cur.execute('INSERT OR IGNORE INTO Movies (title) VALUES (?)', (movie,))
     conn.commit()
 
 def setup_movies_table(cur, conn):
@@ -155,13 +152,10 @@ def populate_movies_table(cur, conn, movie_titles):
         cur.execute("INSERT OR IGNORE INTO Movies (title) VALUES (?)", (title,))
     conn.commit()
 
-def main (): 
+def main ():
     cur, conn = set_up_database()
     true_story_movies = get_true_story_movies()
     populate_true_story_movies_table(cur, conn, true_story_movies)
-    
-    setup_movies_table(cur, conn)
-    populate_movies_table(cur, conn, true_story_movies)
 
     conn.close()
 
