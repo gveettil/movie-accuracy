@@ -356,16 +356,6 @@ def calculate_statistics(cur, conn):
                 f.write(line)
                 print(line.strip())
 
-                # List top 3 movies for that year
-                f.write("  Top movies:\n")
-                print("  Top movies:")
-                top_movies = sorted(stats['movies'], key=lambda x: -x[1])[:3]
-                for movie_title, revenue, category in top_movies:
-                    cat_str = f" ({category})" if category else ""
-                    line = f"    - {movie_title}: ${revenue:.2f}M{cat_str}\n"
-                    f.write(line)
-                    print(line.strip())
-
             # Overall statistics
             all_revenues = [rev for _, _, rev, _ in movies_by_year]
             f.write(f"\nOVERALL STATISTICS:\n")

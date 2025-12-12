@@ -177,81 +177,38 @@ def create_visualization_3(cur):
 
 def create_visualization_4(cur):
     """
-    Visualization 4: Bar chart showing genre distribution by decade.
+    Visualization 4: Line plot of average revenue by release year.
     """
-    print("Creating Visualization 4: Genre Distribution by Decade")
+    print("Creating Visualization 4: Average Revenue by Release Year")
 
-    # Get all movies with their genres and release years
+    # Get average revenue by year
     cur.execute('''
-        SELECT td.genres, CAST(substr(td.release_date, 1, 4) AS INTEGER) as year
+        SELECT CAST(substr(td.release_date, 1, 4) AS INTEGER) as year,
+               AVG(td.revenue) / 1000000.0 as avg_revenue_millions,
+               COUNT(*) as movie_count
         FROM TMDB_Data td
-        WHERE td.genres IS NOT NULL AND td.genres != ''
+        WHERE td.revenue > 0
         AND td.release_date IS NOT NULL AND td.release_date != ''
+        GROUP BY year
         ORDER BY year
     ''')
 
-    all_movies_by_year = cur.fetchall()
+    data = cur.fetchall()
+    years = [row[0] for row in data]
+    avg_revenues = [row[1] for row in data]
+    movie_counts = [row[2] for row in data]
 
-    # Create a dictionary to count genres by decade
-    genre_by_decade = {}
+    # Create line plot
+    plt.figure(figsize=(12, 7))
+    plt.plot(years, avg_revenues, marker='o', linewidth=2, markersize=6)
 
-    for genres_str, year in all_movies_by_year:
-        # Calculate decade (e.g., 2015 -> 2010s)
-        decade = (year // 10) * 10
-
-        individual_genres = [g.strip() for g in genres_str.split(',')]
-
-        if decade not in genre_by_decade:
-            genre_by_decade[decade] = {}
-
-        for genre in individual_genres:
-            if genre in genre_by_decade[decade]:
-                genre_by_decade[decade][genre] += 1
-            else:
-                genre_by_decade[decade][genre] = 1
-
-    # Get top genres to plot (to avoid clutter)
-    all_genres_flat = {}
-    for decade_genres in genre_by_decade.values():
-        for genre, count in decade_genres.items():
-            all_genres_flat[genre] = all_genres_flat.get(genre, 0) + count
-
-    top_genres = sorted(all_genres_flat.items(), key=lambda x: -x[1])[:8]
-    top_genre_names = [g[0] for g in top_genres]
-
-    # Prepare data for grouped bar chart
-    plt.figure(figsize=(14, 8))
-
-    sorted_decades = sorted(genre_by_decade.keys())
-    decade_labels = [f"{d}s" for d in sorted_decades]
-
-    x = np.arange(len(sorted_decades))
-    width = 0.1  # width of each bar
-
-    # Get matplotlib default color cycle
-    prop_cycle = plt.rcParams['axes.prop_cycle']
-    colors = prop_cycle.by_key()['color']
-
-    for idx, genre in enumerate(top_genre_names):
-        counts = []
-        for decade in sorted_decades:
-            count = genre_by_decade[decade].get(genre, 0)
-            counts.append(count)
-
-        # Position bars for each genre
-        offset = width * (idx - len(top_genre_names) / 2)
-        color = colors[idx % len(colors)]
-        plt.bar(x + offset, counts, width, label=genre, color=color, alpha=0.8)
-
-    plt.xlabel('Decade')
-    plt.ylabel('Number of Movies')
-    plt.title('Genre Distribution by Decade (Top 8 Genres)')
-    plt.xticks(x, decade_labels)
-    plt.legend(title='Genre', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True, alpha=0.3, axis='y')
+    plt.xlabel('Release Year')
+    plt.ylabel('Average Revenue (Millions USD)')
+    plt.title('Average Box Office Revenue by Release Year')
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
-    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visualization_4_genre_by_decade.png')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visualization_4_revenue_by_year.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved: {output_path}")
     plt.close()

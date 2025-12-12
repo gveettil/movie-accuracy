@@ -142,92 +142,121 @@ Scientists: $78.70M (based on 8 movies)
 Entertainers: $43.90M (based on 3 movies)
 Politicians: $21.64M (based on 3 movies)
 
-4. GENRE DISTRIBUTION BY DECADE
+4. REVENUE BY RELEASE YEAR
 ------------------------------------------------------------
-Note: Movies with multiple genres are counted in each genre bucket separately.
+Data for scatterplot showing box office performance over time.
 
 
-1940s:
-  Action: 1 movies
-  Crime: 1 movies
-  Drama: 1 movies
+1985:
+  Movies: 1
+  Average Revenue: $1.30M
+  Max Revenue: $1.30M
 
-1960s:
-  Drama: 2 movies
-  Animation: 1 movies
-  Documentary: 1 movies
-  Mystery: 1 movies
-  War: 1 movies
+1993:
+  Movies: 1
+  Average Revenue: $7.00M
+  Max Revenue: $7.00M
 
-1970s:
-  Drama: 3 movies
-  War: 2 movies
-  Action: 1 movies
-  Adventure: 1 movies
-  Animation: 1 movies
-  Documentary: 1 movies
-  Family: 1 movies
-  Fantasy: 1 movies
-  Music: 1 movies
-  TV Movie: 1 movies
+1995:
+  Movies: 1
+  Average Revenue: $11.50M
+  Max Revenue: $11.50M
 
-1980s:
-  Drama: 2 movies
-  Adventure: 1 movies
-  Romance: 1 movies
+2000:
+  Movies: 7
+  Average Revenue: $97.49M
+  Max Revenue: $256.27M
 
-1990s:
-  Action: 2 movies
-  Drama: 2 movies
-  Crime: 1 movies
-  TV Movie: 1 movies
-  Thriller: 1 movies
+2001:
+  Movies: 6
+  Average Revenue: $199.10M
+  Max Revenue: $449.22M
 
-2000s:
-  Drama: 97 movies
-  History: 43 movies
-  War: 22 movies
-  Action: 20 movies
-  Romance: 20 movies
-  Crime: 14 movies
-  Adventure: 12 movies
-  Thriller: 11 movies
-  Music: 7 movies
-  Comedy: 4 movies
-  Western: 3 movies
-  Family: 2 movies
-  TV Movie: 2 movies
-  Fantasy: 1 movies
-  Horror: 1 movies
-  Mystery: 1 movies
+2002:
+  Movies: 8
+  Average Revenue: $112.60M
+  Max Revenue: $352.11M
 
-2010s:
-  Drama: 109 movies
-  History: 45 movies
-  Thriller: 23 movies
-  Action: 22 movies
-  War: 21 movies
-  Adventure: 14 movies
-  Crime: 13 movies
-  Comedy: 12 movies
-  Romance: 11 movies
-  Family: 5 movies
-  Western: 2 movies
-  Fantasy: 1 movies
-  Horror: 1 movies
-  Music: 1 movies
+2003:
+  Movies: 3
+  Average Revenue: $71.76M
+  Max Revenue: $148.30M
 
-2020s:
-  Drama: 5 movies
-  History: 2 movies
-  Action: 1 movies
-  Adventure: 1 movies
-  Comedy: 1 movies
-  Documentary: 1 movies
-  Family: 1 movies
-  Fantasy: 1 movies
-  Romance: 1 movies
-  Thriller: 1 movies
+2004:
+  Movies: 10
+  Average Revenue: $178.91M
+  Max Revenue: $610.06M
+
+2005:
+  Movies: 11
+  Average Revenue: $79.64M
+  Max Revenue: $218.37M
+
+2006:
+  Movies: 11
+  Average Revenue: $74.40M
+  Max Revenue: $307.08M
+
+2007:
+  Movies: 14
+  Average Revenue: $108.78M
+  Max Revenue: $456.08M
+
+2008:
+  Movies: 12
+  Average Revenue: $73.01M
+  Max Revenue: $255.70M
+
+2009:
+  Movies: 10
+  Average Revenue: $83.09M
+  Max Revenue: $309.23M
+
+2010:
+  Movies: 9
+  Average Revenue: $115.59M
+  Max Revenue: $414.21M
+
+2011:
+  Movies: 12
+  Average Revenue: $68.49M
+  Max Revenue: $216.60M
+
+2012:
+  Movies: 11
+  Average Revenue: $108.05M
+  Max Revenue: $275.30M
+
+2013:
+  Movies: 12
+  Average Revenue: $126.38M
+  Max Revenue: $407.04M
+
+2014:
+  Movies: 7
+  Average Revenue: $88.42M
+  Max Revenue: $233.56M
+
+2015:
+  Movies: 11
+  Average Revenue: $120.22M
+  Max Revenue: $532.95M
+
+2016:
+  Movies: 25
+  Average Revenue: $64.33M
+  Max Revenue: $311.00M
+
+2017:
+  Movies: 17
+  Average Revenue: $102.31M
+  Max Revenue: $527.00M
+
+OVERALL STATISTICS:
+  Total movies with revenue data: 199
+  Year range: 1985 - 2017
+  Average revenue across all years: $98.40M
+  Highest revenue: $610.06M
 
 ============================================================
 END OF CALCULATIONS
