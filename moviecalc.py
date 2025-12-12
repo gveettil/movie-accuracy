@@ -17,9 +17,11 @@ def set_up_database():
     return cur, conn
 
 
-def create_subject_categories_table(cur, conn):
+def create_categories_tables(cur, conn):
     """
-    Creates the Subject_Categories table to store categorized subjects.
+    Creates the normalized Categories tables:
+    - Categories: Unique category names (no duplicates!)
+    - MovieCategories: Junction table linking movies to categories
 
     Parameters
     -----------------------
@@ -28,110 +30,162 @@ def create_subject_categories_table(cur, conn):
     conn: Connection
         The database connection.
     """
+    # Categories table - stores unique category names (like Genres table)
     cur.execute('''
-        CREATE TABLE IF NOT EXISTS Subject_Categories (
+        CREATE TABLE IF NOT EXISTS Categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            movie_id INTEGER UNIQUE,
-            category TEXT,
-            FOREIGN KEY (movie_id) REFERENCES Movies(id)
+            name TEXT UNIQUE NOT NULL
+        )
+    ''')
+
+    # MovieCategories junction table - links movies to categories (like MovieGenres)
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS MovieCategories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            movie_id INTEGER NOT NULL,
+            category_id INTEGER NOT NULL,
+            FOREIGN KEY (movie_id) REFERENCES Movies(id),
+            FOREIGN KEY (category_id) REFERENCES Categories(id),
+            UNIQUE(movie_id, category_id)
         )
     ''')
     conn.commit()
 
 
-def categorize_subject_from_plot(title, plot_summary, genres):
+def insert_or_get_category(cur, conn, category_name):
     """
-    Categorizes a movie's subject based on plot summary and TMDB genres.
+    Inserts a category into the Categories table if it doesn't exist,
+    and returns the category's ID.
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    category_name: str
+        The name of the category.
+
+    Returns
+    -----------------------
+    int: The category's ID
+    """
+    # Try to get existing category
+    cur.execute("SELECT id FROM Categories WHERE name = ?", (category_name,))
+    result = cur.fetchone()
+
+    if result:
+        return result[0]
+
+    # Insert new category
+    cur.execute("INSERT INTO Categories (name) VALUES (?)", (category_name,))
+    conn.commit()
+    return cur.lastrowid
+
+
+def categorize_subject_from_overview(title, overview, genre_names):
+    """
+    Categorizes a movie's subject based on TMDB overview and genres.
 
     Parameters
     -----------------------
     title: str
         The movie title.
-    plot_summary: str
-        The Wikipedia plot summary.
-    genres: str
-        The TMDB genres (comma-separated).
+    overview: str
+        The TMDB overview/description.
+    genre_names: str
+        Comma-separated genre names from joined query.
 
     Returns
     -----------------------
     str: The category (broad subject type)
     """
-    if not plot_summary:
-        return "Unknown"
+    if not overview:
+        return "Other"
 
     # Convert to lowercase for easier searching
-    plot_lower = plot_summary.lower()
+    overview_lower = overview.lower()
     title_lower = title.lower()
-    genres_lower = genres.lower() if genres else ""
+    genres_lower = genre_names.lower() if genre_names else ""
 
     # Category classification based on keywords
+    # Order matters! Check more specific categories first
     category = "Other"
 
-    # Musicians & Performers
-    if any(word in plot_lower for word in ['musician', 'singer', 'vocalist', 'composer', 'band member',
-                                            'performs', 'concert', 'album', 'rapper', 'hip hop', 'pianist', 'piano']):
+    # Musicians & Performers (check first - very specific keywords)
+    if any(word in overview_lower for word in ['musician', 'singer', 'vocalist', 'composer', 'band member',
+                                            'performs', 'concert', 'album', 'rapper', 'hip hop', 'pianist', 'piano',
+                                            'musical family', 'selena']):
         category = "Musicians"
 
-    # Athletes & Sports
-    elif any(word in plot_lower for word in ['boxer', 'boxing', 'football', 'basketball', 'baseball',
+    # Athletes & Sports (check early - specific keywords)
+    elif any(word in overview_lower for word in ['boxer', 'boxing', 'football', 'basketball', 'baseball',
                                               'olympic', 'race car', 'racing driver', 'quarterback', 'athlete',
-                                              'coach', 'sport']):
+                                              'coach', 'sport', 'mixed martial', 'mma', 'fighter']):
         category = "Athletes"
 
-    # Criminals & Outlaws
-    elif any(word in plot_lower for word in ['criminal', 'gangster', 'murder', 'killer', 'mob',
-                                              'mafia', 'drug', 'cartel', 'prison', 'fbi', 'arrest',
-                                              'crime', 'heist', 'robbery', 'outlaw']):
-        category = "Criminals"
-
-    # Military & War
-    elif any(word in plot_lower for word in ['military', 'soldier', 'general', 'war', 'battle',
-                                              'army', 'navy', 'marine', 'combat', 'troop', 'officer',
-                                              'colonel', 'sergeant', 'veteran', 'squadron']):
-        category = "Military"
-
-    # Businesspeople & Entrepreneurs
-    elif any(word in plot_lower for word in ['entrepreneur', 'ceo', 'founder', 'billionaire',
-                                              'creates a company', 'starts a business', 'facebook', 'zuckerberg']):
-        category = "Businesspeople"
-
-    # Scientists & Academics
-    elif any(word in plot_lower for word in ['scientist', 'mathematician', 'physicist', 'professor',
-                                              'researcher', 'theory', 'discover', 'invention', 'academic']):
+    # Scientists & Academics (check BEFORE military - scientists often involved in war projects)
+    elif any(word in overview_lower for word in ['scientist', 'mathematician', 'physicist', 'professor',
+                                              'researcher', 'theory', 'discover', 'invention', 'academic',
+                                              'cryptanalyst', 'oppenheimer', 'turing', 'atomic bomb',
+                                              'enigma', 'code', 'cipher', 'computation']):
         category = "Scientists"
 
-    # Activists & Social Figures
-    elif any(word in plot_lower for word in ['activist', 'civil rights', 'protest', 'movement',
-                                              'rights', 'equality', 'discrimination', 'segregation']):
+    # Activists & Social Figures (check BEFORE criminals/military - slavery, civil rights)
+    elif any(word in overview_lower for word in ['activist', 'civil rights', 'protest', 'movement',
+                                              'rights', 'equality', 'discrimination', 'segregation',
+                                              'slavery', 'slave', 'freedom', 'abolitionist', 'black panthers',
+                                              'free black man']):
         category = "Activists"
 
-    # Politicians & Leaders
-    elif any(word in plot_lower for word in ['president', 'prime minister', 'governor', 'senator',
-                                              'politician', 'election', 'campaign', 'congress', 'parliament']):
-        category = "Politicians"
+    # Businesspeople & Entrepreneurs
+    elif any(word in overview_lower for word in ['entrepreneur', 'ceo', 'founder', 'billionaire',
+                                              'creates a company', 'starts a business', 'facebook', 'zuckerberg',
+                                              'businessman']):
+        category = "Businesspeople"
 
-    # Artists & Writers
-    elif any(word in plot_lower for word in ['artist', 'painter', 'writer', 'author', 'novel',
-                                              'book', 'journalist', 'reporter', 'paint', 'artwork']):
+    # Artists & Writers (check before journalists)
+    elif any(word in overview_lower for word in ['artist', 'painter', 'writer', 'author', 'novel',
+                                              'book', 'paint', 'artwork', 'treasure hunt', 'monuments men',
+                                              'architect']):
         category = "Artists & Writers"
 
+    # Politicians & Leaders
+    elif any(word in overview_lower for word in ['president', 'prime minister', 'governor', 'senator',
+                                              'politician', 'election', 'campaign', 'congress', 'parliament',
+                                              'fbi agent', 'deep throat', 'watergate']):
+        category = "Politicians"
+
+    # Criminals & Outlaws (be more specific - avoid false positives)
+    elif any(word in overview_lower for word in ['gangster', 'mob boss', 'mafia', 'drug lord', 'cartel',
+                                              'heist', 'robbery', 'outlaw', 'infiltrates']):
+        category = "Criminals"
+
     # Entertainers (Actors, Directors, etc.)
-    elif any(word in plot_lower for word in ['actor', 'actress', 'director', 'film', 'movie',
+    elif any(word in overview_lower for word in ['actor', 'actress', 'director', 'film producer',
                                               'hollywood', 'performance', 'stage']):
         category = "Entertainers"
 
-    # Historical Events (check for event-focused narratives)
+    # Military & War (check LAST - many movies mention war but aren't about military figures)
+    elif any(word in overview_lower for word in ['soldier', 'general', 'navy', 'marine', 'combat',
+                                              'colonel', 'sergeant', 'veteran', 'squadron', 'medic',
+                                              'prisoner of war', 'wwii', 'world war']) or \
+         ('military' in overview_lower and 'mixed martial' not in overview_lower):
+        category = "Military"
+
+    # Historical Events (check for event-focused narratives without specific people)
     elif any(word in title_lower for word in ['disaster', 'attack', 'operation', 'mission', 'incident']) or \
          (('war' in genres_lower or 'history' in genres_lower) and
-          not any(person_word in plot_lower[:500] for person_word in ['he ', 'she ', 'his ', 'her ', 'him '])):
+          not any(person_word in overview_lower[:500] for person_word in ['he ', 'she ', 'his ', 'her ', 'him '])):
         category = "Historical Events"
 
     return category
 
 
-def populate_subject_categories(cur, conn, limit=25):
+def populate_movie_categories(cur, conn, limit=25):
     """
-    Populates the Subject_Categories table by categorizing subjects.
+    Populates the MovieCategories table by categorizing movies.
+    Uses normalized schema with Categories and MovieCategories tables.
     Processes up to 'limit' entries per run.
 
     Parameters
@@ -143,14 +197,19 @@ def populate_subject_categories(cur, conn, limit=25):
     limit: int
         Maximum number of entries to process per run (default 25).
     """
-    # Get movies that haven't been categorized yet, along with their plot summaries and genres
+    # Get movies that haven't been categorized yet, with their overview and genres
     cur.execute('''
-        SELECT m.id, m.title, p.plot_summary, td.genres
+        SELECT
+            m.id,
+            m.title,
+            m.overview,
+            GROUP_CONCAT(g.name, ', ') as genre_names
         FROM Movies m
-        JOIN Plots p ON m.id = p.movie_id
-        LEFT JOIN TMDB_Data td ON m.id = td.movie_id
-        WHERE m.id NOT IN (SELECT movie_id FROM Subject_Categories)
-        AND p.plot_summary IS NOT NULL
+        LEFT JOIN MovieGenres mg ON m.id = mg.movie_id
+        LEFT JOIN Genres g ON mg.genre_id = g.id
+        WHERE m.id NOT IN (SELECT DISTINCT movie_id FROM MovieCategories)
+        AND m.overview IS NOT NULL
+        GROUP BY m.id, m.title, m.overview
         LIMIT ?
     ''', (limit,))
 
@@ -162,30 +221,35 @@ def populate_subject_categories(cur, conn, limit=25):
 
     print(f"Categorizing {len(movies_to_process)} movies...")
 
-    for movie_id, title, plot_summary, genres in movies_to_process:
+    for movie_id, title, overview, genre_names in movies_to_process:
         print(f"\nProcessing: {title}")
 
-        # Categorize based on plot summary and genres
-        category = categorize_subject_from_plot(title, plot_summary, genres)
-        print(f"  Category: {category}")
+        # Categorize based on overview and genres
+        category_name = categorize_subject_from_overview(title, overview, genre_names)
+        print(f"  Category: {category_name}")
 
-        # Store in database
+        # Get or create category ID
+        category_id = insert_or_get_category(cur, conn, category_name)
+
+        # Link movie to category
         cur.execute('''
-            INSERT OR REPLACE INTO Subject_Categories
-            (movie_id, category)
+            INSERT OR IGNORE INTO MovieCategories (movie_id, category_id)
             VALUES (?, ?)
-        ''', (movie_id, category))
+        ''', (movie_id, category_id))
 
     conn.commit()
     print(f"\n{'='*60}")
     print(f"Successfully categorized {len(movies_to_process)} movies.")
 
     # Show progress
-    cur.execute('SELECT COUNT(*) FROM Subject_Categories')
+    cur.execute('SELECT COUNT(DISTINCT movie_id) FROM MovieCategories')
     total_categorized = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(*) FROM Movies m JOIN Plots p ON m.id = p.movie_id WHERE p.plot_summary IS NOT NULL')
+    cur.execute('SELECT COUNT(*) FROM Movies WHERE overview IS NOT NULL')
     total_movies = cur.fetchone()[0]
+    cur.execute('SELECT COUNT(*) FROM Categories')
+    total_categories = cur.fetchone()[0]
     print(f"Total progress: {total_categorized}/{total_movies} movies categorized.")
+    print(f"Total unique categories: {total_categories}")
 
 
 def calculate_statistics(cur, conn):
@@ -212,7 +276,7 @@ def calculate_statistics(cur, conn):
         f.write("="*60 + "\n\n")
 
         # Get total count of movies considered
-        cur.execute('SELECT COUNT(*) FROM Subject_Categories')
+        cur.execute('SELECT COUNT(DISTINCT movie_id) FROM MovieCategories')
         total_movies = cur.fetchone()[0]
         f.write(f"TOTAL MOVIES ANALYZED: {total_movies}\n")
         f.write("="*60 + "\n\n")
@@ -222,9 +286,10 @@ def calculate_statistics(cur, conn):
         f.write("-" * 60 + "\n")
 
         cur.execute('''
-            SELECT sc.category, COUNT(*) as movie_count
-            FROM Subject_Categories sc
-            GROUP BY sc.category
+            SELECT c.name, COUNT(*) as movie_count
+            FROM MovieCategories mc
+            JOIN Categories c ON mc.category_id = c.id
+            GROUP BY c.name
             ORDER BY movie_count DESC
         ''')
 
@@ -236,38 +301,33 @@ def calculate_statistics(cur, conn):
 
         f.write("\n")
 
-        # 2. Category with genre data (JOIN with TMDB_Data and Movies)
-        # Note: Movies may be counted in multiple genre buckets
+        # 2. Category with genre data (JOIN with Genres via MovieGenres and Movies)
         f.write("2. SUBJECT CATEGORIES WITH MOST COMMON MOVIE GENRES\n")
         f.write("-" * 60 + "\n")
         f.write("Note: Movies with multiple genres are counted in each genre bucket separately.\n\n")
 
         # Get all movies with their categories and genres
         cur.execute('''
-            SELECT sc.category, td.genres
-            FROM Subject_Categories sc
-            JOIN TMDB_Data td ON sc.movie_id = td.movie_id
-            WHERE td.genres IS NOT NULL AND td.genres != ''
+            SELECT c.name, g.name
+            FROM MovieCategories mc
+            JOIN Categories c ON mc.category_id = c.id
+            JOIN MovieGenres mg ON mc.movie_id = mg.movie_id
+            JOIN Genres g ON mg.genre_id = g.id
         ''')
 
-        all_movies = cur.fetchall()
+        all_movie_genres = cur.fetchall()
 
         # Create a dictionary to count genres by category
         genre_counts = {}
 
-        for category, genres_str in all_movies:
-            # Split genres by comma and strip whitespace
-            individual_genres = [g.strip() for g in genres_str.split(',')]
-
+        for category, genre_name in all_movie_genres:
             if category not in genre_counts:
                 genre_counts[category] = {}
 
-            # Count each genre separately
-            for genre in individual_genres:
-                if genre in genre_counts[category]:
-                    genre_counts[category][genre] += 1
-                else:
-                    genre_counts[category][genre] = 1
+            if genre_name in genre_counts[category]:
+                genre_counts[category][genre_name] += 1
+            else:
+                genre_counts[category][genre_name] = 1
 
         # Sort and display results
         for category in sorted(genre_counts.keys()):
@@ -290,11 +350,12 @@ def calculate_statistics(cur, conn):
         f.write("-" * 60 + "\n")
 
         cur.execute('''
-            SELECT sc.category, AVG(td.revenue) / 1000000.0 as avg_revenue_millions, COUNT(*) as movie_count
-            FROM Subject_Categories sc
-            JOIN TMDB_Data td ON sc.movie_id = td.movie_id
-            WHERE td.revenue > 0
-            GROUP BY sc.category
+            SELECT c.name, AVG(m.revenue) / 1000000.0 as avg_revenue_millions, COUNT(*) as movie_count
+            FROM MovieCategories mc
+            JOIN Categories c ON mc.category_id = c.id
+            JOIN Movies m ON mc.movie_id = m.id
+            WHERE m.revenue > 0
+            GROUP BY c.name
             ORDER BY avg_revenue_millions DESC
         ''')
 
@@ -313,13 +374,13 @@ def calculate_statistics(cur, conn):
 
         # Get all movies with revenue and release year
         cur.execute('''
-            SELECT m.title, CAST(substr(td.release_date, 1, 4) AS INTEGER) as year,
-                   td.revenue / 1000000.0 as revenue_millions, sc.category
-            FROM TMDB_Data td
-            JOIN Movies m ON td.movie_id = m.id
-            LEFT JOIN Subject_Categories sc ON m.id = sc.movie_id
-            WHERE td.revenue > 0
-            AND td.release_date IS NOT NULL AND td.release_date != ''
+            SELECT m.title, CAST(substr(m.release_date, 1, 4) AS INTEGER) as year,
+                   m.revenue / 1000000.0 as revenue_millions, c.name
+            FROM Movies m
+            LEFT JOIN MovieCategories mc ON m.id = mc.movie_id
+            LEFT JOIN Categories c ON mc.category_id = c.id
+            WHERE m.revenue > 0
+            AND m.release_date IS NOT NULL AND m.release_date != ''
             ORDER BY year, revenue_millions DESC
         ''')
 
@@ -384,18 +445,18 @@ def calculate_statistics(cur, conn):
 
 def main():
     cur, conn = set_up_database()
-    create_subject_categories_table(cur, conn)
-    populate_subject_categories(cur, conn, limit=25)
+    create_categories_tables(cur, conn)
+    populate_movie_categories(cur, conn, limit=25)
 
     # After all data is collected, run calculations
-    cur.execute('SELECT COUNT(*) FROM Subject_Categories')
+    cur.execute('SELECT COUNT(DISTINCT movie_id) FROM MovieCategories')
     categorized_count = cur.fetchone()[0]
 
     if categorized_count > 0:
         print("\nRunning calculations on categorized data...")
         calculate_statistics(cur, conn)
     else:
-        print("\nNo categorized data yet. Run this script multiple times to categorize all subjects.")
+        print("\nNo categorized data yet. Run this script multiple times to categorize all movies.")
 
     conn.close()
 

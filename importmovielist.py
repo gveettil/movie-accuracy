@@ -119,17 +119,33 @@ def get_true_story_movies():
         print("Browser closed.")
 
 def setup_movies_table(cur, conn):
+    """
+    Creates the Movies table with basic structure.
+    TMDB data will be added later by tmdbdata.py
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    """
     cur.execute("""
         CREATE TABLE IF NOT EXISTS Movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT UNIQUE
+            title TEXT NOT NULL UNIQUE,
+            tmdb_id INTEGER UNIQUE,
+            release_date TEXT,
+            revenue INTEGER,
+            overview TEXT
         )
     """)
     conn.commit()
 
 def populate_movies_table(cur, conn, movie_titles):
     """
-    Populates the Movies table in the database with movie titles.
+    Populates the Movies table in the database with movie titles ONLY.
+    TMDB data (genres, revenue, overview) will be fetched by tmdbdata.py
 
     Parameters
     -----------------------
@@ -141,15 +157,36 @@ def populate_movies_table(cur, conn, movie_titles):
         A list of movie titles to insert into the database.
     """
     setup_movies_table(cur, conn)
+
+    inserted = 0
     for title in movie_titles:
         cur.execute("INSERT OR IGNORE INTO Movies (title) VALUES (?)", (title,))
+        if cur.rowcount > 0:
+            inserted += 1
+
     conn.commit()
 
-def main ():
+    print(f"\n{'='*60}")
+    print(f"Inserted {inserted} new movies")
+    cur.execute("SELECT COUNT(*) FROM Movies")
+    total = cur.fetchone()[0]
+    print(f"Total movies in database: {total}")
+    print("="*60)
+
+def main():
+    """
+    Main function: Scrapes IMDb for true story movies and inserts titles into database.
+    Run tmdbdata.py next to fetch detailed information from TMDB.
+    """
     cur, conn = set_up_database()
+    print("="*60)
+    print("STEP 1: Scraping IMDb for True Story Movies")
+    print("="*60)
+
     true_story_movies = get_true_story_movies()
     populate_movies_table(cur, conn, true_story_movies)
 
+    print("\nNext step: Run tmdbdata.py to fetch details from TMDB API")
     conn.close()
 
 if __name__ == "__main__":

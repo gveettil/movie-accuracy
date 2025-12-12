@@ -5,87 +5,148 @@ import os
 
 
 # TMDB API KEY
-
 with open("tmdb_apikey.txt", "r") as f:
     TMDB_API_KEY = f.read().strip()
 
 
-# Database connection
-
 def set_up_database():
+    """
+    Sets up a SQLite database connection and cursor.
+
+    Returns
+    -----------------------
+    Tuple (Cursor, Connection):
+        A tuple containing the database cursor and connection objects.
+    """
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path + "/movies.db", timeout=10)
     cur = conn.cursor()
     return cur, conn
 
 
+def setup_tables(cur, conn):
+    """
+    Creates the normalized database schema for TMDB data:
+    - Genres: Unique genre names (no duplicate strings!)
+    - MovieGenres: Junction table for many-to-many relationship
 
-# TMDB API Helpers
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    """
+    # Genres table - stores unique genre names (no duplicate strings!)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS Genres (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # MovieGenres junction table - links movies to genres (many-to-many)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS MovieGenres (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            movie_id INTEGER NOT NULL,
+            genre_id INTEGER NOT NULL,
+            FOREIGN KEY (movie_id) REFERENCES Movies(id),
+            FOREIGN KEY (genre_id) REFERENCES Genres(id),
+            UNIQUE(movie_id, genre_id)
+        )
+    """)
+
+    conn.commit()
+
 
 def tmdb_search_movie(title):
     """
-    Searches TMDB for a movie title and returns TMDB ID.
+    Searches TMDB for a movie title and returns the best match.
+
+    Parameters
+    -----------------------
+    title: str
+        The movie title to search for.
+
+    Returns
+    -----------------------
+    dict or None: First search result from TMDB, or None if not found.
     """
     url = "https://api.themoviedb.org/3/search/movie"
     params = {
         "api_key": TMDB_API_KEY,
-        "query": title
+        "query": title,
+        "language": "en-US"
     }
 
-    resp = requests.get(url, params=params)
-    data = resp.json()
+    response = requests.get(url, params=params)
+    data = response.json()
 
     results = data.get("results", [])
     if not results:
         return None
-    return results[0]["id"]
+
+    return results[0]
 
 
 def tmdb_get_movie_details(tmdb_id):
     """
-    Returns genres, release_date, and revenue for a TMDB ID.
+    Gets detailed information about a specific movie from TMDB.
+
+    Parameters
+    -----------------------
+    tmdb_id: int
+        The TMDB ID of the movie.
+
+    Returns
+    -----------------------
+    dict: Movie details including genres, revenue, release_date, overview, etc.
     """
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}"
-    params = {"api_key": TMDB_API_KEY}
+    params = {"api_key": TMDB_API_KEY, "language": "en-US"}
 
-    resp = requests.get(url, params=params)
-    data = resp.json()
-
-    genres = ", ".join([g["name"] for g in data.get("genres", [])])
-
-    return {
-        "tmdb_id": data.get("id"),
-        "genres": genres,
-        "release_date": data.get("release_date"),
-        "revenue": data.get("revenue", 0)
-    }
+    response = requests.get(url, params=params)
+    return response.json()
 
 
-
-# TMDB Table Setup
-
-def setup_tmdb_table(cur, conn):
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS TMDB_Data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            movie_id INTEGER UNIQUE,
-            tmdb_id INTEGER,
-            genres TEXT,
-            release_date TEXT,
-            revenue INTEGER,
-            FOREIGN KEY(movie_id) REFERENCES Movies(id)
-        )
-    """)
-    conn.commit()
-
-
-
-# Populate TMDB_Data (≤25 per run)
-
-def populate_tmdb_table(cur, conn, limit=25):
+def insert_or_get_genre(cur, conn, genre_name):
     """
-    Fetch TMDB data for up to 25 movies not yet processed.
-    Satisfies rubric requirement.
+    Inserts a genre into the Genres table if it doesn't exist,
+    and returns the genre's ID.
+    This ensures NO DUPLICATE genre strings in the database.
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    genre_name: str
+        The name of the genre.
+
+    Returns
+    -----------------------
+    int: The genre's ID
+    """
+    # Try to get existing genre
+    cur.execute("SELECT id FROM Genres WHERE name = ?", (genre_name,))
+    result = cur.fetchone()
+
+    if result:
+        return result[0]
+
+    # Insert new genre
+    cur.execute("INSERT INTO Genres (name) VALUES (?)", (genre_name,))
+    conn.commit()
+    return cur.lastrowid
+
+
+def populate_tmdb_data(cur, conn, limit=25):
+    """
+    Fetches TMDB data for movies that don't have it yet.
+    Updates Movies table and populates Genres/MovieGenres tables.
+    Processes up to 'limit' movies per run (satisfies ≤25 requirement).
 
     Parameters
     -----------------------
@@ -96,64 +157,106 @@ def populate_tmdb_table(cur, conn, limit=25):
     limit: int
         Maximum number of movies to process per run (default 25).
     """
-
-    # Get movies that don't have TMDB data yet
+    # Get movies that don't have TMDB data yet (no tmdb_id)
     cur.execute('''
         SELECT id, title
         FROM Movies
-        WHERE id NOT IN (SELECT movie_id FROM TMDB_Data)
+        WHERE tmdb_id IS NULL
         LIMIT ?
     ''', (limit,))
 
-    to_process = cur.fetchall()
+    movies_to_process = cur.fetchall()
 
-    if not to_process:
+    if not movies_to_process:
         print("All movies already have TMDB data!")
         return
 
-    print(f"Processing {len(to_process)} movies...")
+    print(f"Processing {len(movies_to_process)} movies...")
 
-    for movie_id, title in to_process:
-        print(f"\nFetching TMDB for: {title}")
+    processed = 0
+    for movie_id, title in movies_to_process:
+        print(f"\nSearching TMDB for: {title}")
 
-        tmdb_id = tmdb_search_movie(title)
-        if tmdb_id is None:
-            print("  TMDB match not found.")
+        # Search for movie on TMDB
+        search_result = tmdb_search_movie(title)
+        if search_result is None:
+            print(f"  ✗ No TMDB match found for '{title}'")
             continue
 
+        tmdb_id = search_result['id']
+        print(f"  ✓ Found on TMDB (ID: {tmdb_id})")
+
+        # Get full movie details
+        time.sleep(0.25)  # Rate limiting
         details = tmdb_get_movie_details(tmdb_id)
 
+        # Update Movies table with TMDB data
         cur.execute("""
-            INSERT OR REPLACE INTO TMDB_Data
-            (movie_id, tmdb_id, genres, release_date, revenue)
-            VALUES (?, ?, ?, ?, ?)
+            UPDATE Movies
+            SET tmdb_id = ?,
+                release_date = ?,
+                revenue = ?,
+                overview = ?
+            WHERE id = ?
         """, (
-            movie_id,
-            details["tmdb_id"],
-            details["genres"],
-            details["release_date"],
-            details["revenue"]
+            details.get('id'),
+            details.get('release_date'),
+            details.get('revenue', 0),
+            details.get('overview'),
+            movie_id
         ))
 
-        conn.commit()
-        print(f"  Saved TMDB data for '{title}'.")
-        time.sleep(1)  # short break for tmdb api rate limit
+        # Insert genres using normalized structure (no duplicate strings!)
+        genres = details.get('genres', [])
+        for genre_data in genres:
+            genre_name = genre_data['name']
+            # Get or create genre (ensures uniqueness)
+            genre_id = insert_or_get_genre(cur, conn, genre_name)
 
-    print("\nTMDB population run complete.")
+            # Link movie to genre
+            cur.execute("""
+                INSERT OR IGNORE INTO MovieGenres (movie_id, genre_id)
+                VALUES (?, ?)
+            """, (movie_id, genre_id))
+
+        conn.commit()
+        processed += 1
+        print(f"  ✓ Saved: {details.get('title')} with {len(genres)} genres")
+
+    print(f"\n{'='*60}")
+    print(f"Processed {processed} new movies")
 
     # Show progress
-    cur.execute('SELECT COUNT(*) FROM TMDB_Data')
-    total_processed = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(*) FROM Movies')
+    cur.execute("SELECT COUNT(*) FROM Movies WHERE tmdb_id IS NOT NULL")
+    total_with_tmdb = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM Movies")
     total_movies = cur.fetchone()[0]
-    print(f"Total progress: {total_processed}/{total_movies} movies have TMDB data.")
+    cur.execute("SELECT COUNT(*) FROM Genres")
+    total_genres = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM MovieGenres")
+    total_links = cur.fetchone()[0]
 
+    print(f"Total progress: {total_with_tmdb}/{total_movies} movies have TMDB data")
+    print(f"Total unique genres: {total_genres}")
+    print(f"Total movie-genre links: {total_links}")
+    print("="*60)
 
 
 def main():
+    """
+    Main function: Fetches TMDB data for movies in the database.
+    Run importmovielist.py first to populate movie titles.
+    """
     cur, conn = set_up_database()
-    setup_tmdb_table(cur, conn)
-    populate_tmdb_table(cur, conn, limit=25)
+
+    print("="*60)
+    print("STEP 2: Fetching TMDB Data for Movies")
+    print("="*60)
+
+    setup_tables(cur, conn)
+    populate_tmdb_data(cur, conn, limit=25)
+
+    print("\nNext step: Run moviecalc.py to categorize movies")
     conn.close()
 
 

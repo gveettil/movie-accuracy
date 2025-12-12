@@ -14,13 +14,15 @@ def set_up_database():
 def create_visualization_1(cur):
     """
     Visualization 1: Bar chart of movie counts by subject category.
+    Uses normalized Categories and MovieCategories tables.
     """
     print("Creating Visualization 1: Movie Count by Subject Category")
 
     cur.execute('''
-        SELECT sc.category, COUNT(*) as movie_count
-        FROM Subject_Categories sc
-        GROUP BY sc.category
+        SELECT c.name, COUNT(*) as movie_count
+        FROM MovieCategories mc
+        JOIN Categories c ON mc.category_id = c.id
+        GROUP BY c.name
         ORDER BY movie_count DESC
     ''')
 
@@ -53,33 +55,32 @@ def create_visualization_1(cur):
 def create_visualization_2(cur):
     """
     Visualization 2: Stacked bar chart showing top genres for each subject category.
+    Uses normalized schema with Genres, MovieGenres, Categories, and MovieCategories tables.
     """
     print("Creating Visualization 2: Genre Distribution by Subject Category")
 
-    # Get all movies with their categories and genres
+    # Get all movies with their categories and genres using JOIN
     cur.execute('''
-        SELECT sc.category, td.genres
-        FROM Subject_Categories sc
-        JOIN TMDB_Data td ON sc.movie_id = td.movie_id
-        WHERE td.genres IS NOT NULL AND td.genres != ''
+        SELECT c.name, g.name
+        FROM MovieCategories mc
+        JOIN Categories c ON mc.category_id = c.id
+        JOIN MovieGenres mg ON mc.movie_id = mg.movie_id
+        JOIN Genres g ON mg.genre_id = g.id
     ''')
 
-    all_movies = cur.fetchall()
+    all_movie_genres = cur.fetchall()
 
     # Create a dictionary to count genres by category
     genre_counts = {}
 
-    for category, genres_str in all_movies:
-        individual_genres = [g.strip() for g in genres_str.split(',')]
-
+    for category, genre_name in all_movie_genres:
         if category not in genre_counts:
             genre_counts[category] = {}
 
-        for genre in individual_genres:
-            if genre in genre_counts[category]:
-                genre_counts[category][genre] += 1
-            else:
-                genre_counts[category][genre] = 1
+        if genre_name in genre_counts[category]:
+            genre_counts[category][genre_name] += 1
+        else:
+            genre_counts[category][genre_name] = 1
 
     # Get top 5 genres overall to focus on
     all_genres_flat = {}
@@ -136,15 +137,17 @@ def create_visualization_2(cur):
 def create_visualization_3(cur):
     """
     Visualization 3: Bar chart of average revenue by subject category.
+    Uses normalized Categories and MovieCategories tables.
     """
     print("Creating Visualization 3: Average Revenue by Subject Category")
 
     cur.execute('''
-        SELECT sc.category, AVG(td.revenue) / 1000000.0 as avg_revenue_millions, COUNT(*) as movie_count
-        FROM Subject_Categories sc
-        JOIN TMDB_Data td ON sc.movie_id = td.movie_id
-        WHERE td.revenue > 0
-        GROUP BY sc.category
+        SELECT c.name, AVG(m.revenue) / 1000000.0 as avg_revenue_millions, COUNT(*) as movie_count
+        FROM MovieCategories mc
+        JOIN Categories c ON mc.category_id = c.id
+        JOIN Movies m ON mc.movie_id = m.id
+        WHERE m.revenue > 0
+        GROUP BY c.name
         ORDER BY avg_revenue_millions DESC
     ''')
 
@@ -178,17 +181,18 @@ def create_visualization_3(cur):
 def create_visualization_4(cur):
     """
     Visualization 4: Line plot of average revenue by release year.
+    Uses Movies table instead of TMDB_Data.
     """
     print("Creating Visualization 4: Average Revenue by Release Year")
 
     # Get average revenue by year
     cur.execute('''
-        SELECT CAST(substr(td.release_date, 1, 4) AS INTEGER) as year,
-               AVG(td.revenue) / 1000000.0 as avg_revenue_millions,
+        SELECT CAST(substr(m.release_date, 1, 4) AS INTEGER) as year,
+               AVG(m.revenue) / 1000000.0 as avg_revenue_millions,
                COUNT(*) as movie_count
-        FROM TMDB_Data td
-        WHERE td.revenue > 0
-        AND td.release_date IS NOT NULL AND td.release_date != ''
+        FROM Movies m
+        WHERE m.revenue > 0
+        AND m.release_date IS NOT NULL AND m.release_date != ''
         GROUP BY year
         ORDER BY year
     ''')

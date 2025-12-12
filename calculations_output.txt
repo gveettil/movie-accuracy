@@ -2,145 +2,157 @@
 TRUE STORY MOVIE SUBJECT ANALYSIS - CALCULATIONS
 ============================================================
 
-TOTAL MOVIES ANALYZED: 243
+TOTAL MOVIES ANALYZED: 250
 ============================================================
 
 1. COUNT OF MOVIES BY SUBJECT CATEGORY
 ------------------------------------------------------------
-Criminals: 93 movies
-Military: 59 movies
-Athletes: 33 movies
-Musicians: 27 movies
-Scientists: 12 movies
-Artists & Writers: 6 movies
-Other: 5 movies
-Politicians: 3 movies
-Entertainers: 3 movies
-Businesspeople: 2 movies
+Other: 118 movies
+Athletes: 45 movies
+Military: 24 movies
+Scientists: 13 movies
+Politicians: 10 movies
+Activists: 9 movies
+Artists & Writers: 8 movies
+Musicians: 7 movies
+Criminals: 6 movies
+Businesspeople: 6 movies
+Historical Events: 2 movies
+Entertainers: 2 movies
 
 2. SUBJECT CATEGORIES WITH MOST COMMON MOVIE GENRES
 ------------------------------------------------------------
 Note: Movies with multiple genres are counted in each genre bucket separately.
 
 
-Artists & Writers:
-  Drama: 5 movies
-  History: 3 movies
+Activists:
+  Drama: 9 movies
+  History: 6 movies
   Adventure: 2 movies
   Action: 1 movies
-  Music: 1 movies
-  Romance: 1 movies
+  War: 1 movies
+
+Artists & Writers:
+  Drama: 6 movies
+  Romance: 4 movies
+  Action: 2 movies
+  War: 2 movies
+  Adventure: 1 movies
+  History: 1 movies
   Thriller: 1 movies
 
 Athletes:
-  Drama: 31 movies
-  History: 11 movies
-  Action: 6 movies
-  Adventure: 3 movies
-  Crime: 3 movies
-  Comedy: 2 movies
-  War: 2 movies
+  Drama: 39 movies
+  History: 16 movies
+  Action: 11 movies
+  Adventure: 8 movies
+  War: 7 movies
+  Comedy: 5 movies
+  Crime: 4 movies
+  Romance: 4 movies
+  Thriller: 2 movies
   Documentary: 1 movies
-  Family: 1 movies
-  Music: 1 movies
-  Romance: 1 movies
+  Western: 1 movies
 
 Businesspeople:
-  Drama: 2 movies
-  Adventure: 1 movies
+  Drama: 5 movies
+  History: 3 movies
+  Action: 1 movies
   Comedy: 1 movies
-  Fantasy: 1 movies
-  Romance: 1 movies
+  Crime: 1 movies
+  Thriller: 1 movies
 
 Criminals:
-  Drama: 77 movies
-  History: 32 movies
-  Action: 29 movies
-  War: 27 movies
-  Crime: 23 movies
-  Thriller: 23 movies
-  Adventure: 12 movies
-  Romance: 9 movies
-  Comedy: 3 movies
-  Family: 3 movies
-  TV Movie: 3 movies
-  Western: 3 movies
-  Mystery: 2 movies
-  Animation: 1 movies
-  Fantasy: 1 movies
-  Horror: 1 movies
-  Music: 1 movies
+  Drama: 5 movies
+  Crime: 3 movies
+  Action: 2 movies
+  History: 2 movies
+  Thriller: 1 movies
+  Western: 1 movies
 
 Entertainers:
-  Drama: 3 movies
-  Family: 1 movies
+  Crime: 1 movies
+  Drama: 1 movies
+  Music: 1 movies
+  Thriller: 1 movies
+
+Historical Events:
+  Documentary: 1 movies
+  Drama: 1 movies
+  History: 1 movies
+  War: 1 movies
 
 Military:
-  Drama: 54 movies
-  History: 32 movies
-  Romance: 13 movies
-  War: 12 movies
-  Action: 9 movies
-  Adventure: 5 movies
-  Comedy: 4 movies
-  Family: 4 movies
-  Thriller: 4 movies
-  Animation: 1 movies
+  Drama: 19 movies
+  War: 16 movies
+  Action: 10 movies
+  History: 9 movies
+  Thriller: 6 movies
+  Romance: 4 movies
+  Adventure: 2 movies
   Crime: 1 movies
-  Documentary: 1 movies
-  Fantasy: 1 movies
-  TV Movie: 1 movies
-  Western: 1 movies
 
 Musicians:
-  Drama: 25 movies
-  Music: 6 movies
-  Comedy: 5 movies
-  History: 5 movies
-  Romance: 4 movies
-  Thriller: 4 movies
-  Adventure: 3 movies
+  Drama: 6 movies
+  Music: 3 movies
   War: 3 movies
-  Action: 2 movies
-  Crime: 1 movies
-  Documentary: 1 movies
-  Horror: 1 movies
-  Western: 1 movies
-
-Other:
-  Drama: 5 movies
-  History: 2 movies
-  Comedy: 1 movies
-  Crime: 1 movies
-  Romance: 1 movies
-
-Politicians:
-  Drama: 3 movies
-  Romance: 2 movies
+  Thriller: 2 movies
   History: 1 movies
 
-Scientists:
+Other:
+  Drama: 108 movies
+  History: 39 movies
+  Thriller: 22 movies
+  Action: 20 movies
+  Crime: 17 movies
+  Romance: 17 movies
+  Adventure: 14 movies
+  War: 12 movies
+  Comedy: 10 movies
+  Family: 7 movies
+  Music: 5 movies
+  Fantasy: 4 movies
+  TV Movie: 3 movies
+  Western: 3 movies
+  Animation: 2 movies
+  Horror: 2 movies
+  Mystery: 2 movies
+  Documentary: 1 movies
+
+Politicians:
   Drama: 10 movies
-  Thriller: 3 movies
-  Adventure: 2 movies
-  History: 2 movies
+  History: 6 movies
+  Crime: 2 movies
   Comedy: 1 movies
-  Fantasy: 1 movies
   Romance: 1 movies
   War: 1 movies
 
+Scientists:
+  Drama: 12 movies
+  History: 5 movies
+  Romance: 3 movies
+  War: 3 movies
+  Adventure: 2 movies
+  Family: 2 movies
+  Action: 1 movies
+  Comedy: 1 movies
+  TV Movie: 1 movies
+  Thriller: 1 movies
+
 3. AVERAGE REVENUE BY SUBJECT CATEGORY (in millions USD)
 ------------------------------------------------------------
-Other: $142.36M (based on 3 movies)
-Musicians: $127.51M (based on 22 movies)
-Military: $114.27M (based on 49 movies)
-Criminals: $96.09M (based on 72 movies)
-Athletes: $81.94M (based on 29 movies)
-Artists & Writers: $80.57M (based on 5 movies)
-Businesspeople: $79.03M (based on 2 movies)
-Scientists: $78.70M (based on 8 movies)
-Entertainers: $43.90M (based on 3 movies)
-Politicians: $21.64M (based on 3 movies)
+Businesspeople: $152.70M (based on 6 movies)
+Politicians: $140.03M (based on 10 movies)
+Criminals: $131.35M (based on 5 movies)
+Military: $105.50M (based on 20 movies)
+Scientists: $105.29M (based on 10 movies)
+Other: $99.78M (based on 91 movies)
+Athletes: $83.30M (based on 34 movies)
+Musicians: $79.24M (based on 5 movies)
+Artists & Writers: $73.94M (based on 8 movies)
+Activists: $68.35M (based on 9 movies)
+Historical Events: $66.56M (based on 1 movies)
+Entertainers: $32.40M (based on 1 movies)
 
 4. REVENUE BY RELEASE YEAR
 ------------------------------------------------------------
@@ -213,8 +225,8 @@ Data for scatterplot showing box office performance over time.
   Max Revenue: $309.23M
 
 2010:
-  Movies: 9
-  Average Revenue: $115.59M
+  Movies: 10
+  Average Revenue: $120.82M
   Max Revenue: $414.21M
 
 2011:
@@ -253,9 +265,9 @@ Data for scatterplot showing box office performance over time.
   Max Revenue: $527.00M
 
 OVERALL STATISTICS:
-  Total movies with revenue data: 199
+  Total movies with revenue data: 200
   Year range: 1985 - 2017
-  Average revenue across all years: $98.40M
+  Average revenue across all years: $98.75M
   Highest revenue: $610.06M
 
 ============================================================
