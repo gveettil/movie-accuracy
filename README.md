@@ -1,4 +1,4 @@
-# Movie Accuracy Project
+# True Story Movie Analysis Project
 
 ## Project Overview
 
