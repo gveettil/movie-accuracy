@@ -14,7 +14,6 @@ import requests
 import unittest
 import sqlite3
 import json
-import matplotlib.pyplot as plt
 import time
 
 
@@ -142,11 +141,28 @@ def populate_true_story_movies_table(cur, conn, true_story_movies):
         cur.execute('INSERT OR IGNORE INTO True_Story_Movies (title) VALUES (?)', (movie,))
     conn.commit()
 
+def setup_movies_table(cur, conn):
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS Movies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT UNIQUE
+        )
+    """)
+    conn.commit()
+
+def populate_movies_table(cur, conn, movie_titles):
+    for title in movie_titles:
+        cur.execute("INSERT OR IGNORE INTO Movies (title) VALUES (?)", (title,))
+    conn.commit()
 
 def main (): 
     cur, conn = set_up_database()
     true_story_movies = get_true_story_movies()
     populate_true_story_movies_table(cur, conn, true_story_movies)
+    
+    setup_movies_table(cur, conn)
+    populate_movies_table(cur, conn, true_story_movies)
+
     conn.close()
 
 if __name__ == "__main__":
