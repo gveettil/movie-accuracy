@@ -118,26 +118,6 @@ def get_true_story_movies():
         driver.quit()
         print("Browser closed.")
 
-def populate_true_story_movies_table(cur, conn, true_story_movies):
-    """
-    Populates the Movies table in the database with movie titles.
-    (Deprecated function name kept for compatibility)
-
-    Parameters
-    -----------------------
-    cur: Cursor
-        The database cursor.
-    conn: Connection
-        The database connection.
-    true_story_movies: List of str
-        A list of movie titles based on true stories.
-    """
-    # Now uses Movies table instead of creating duplicate True_Story_Movies
-    setup_movies_table(cur, conn)
-    for movie in true_story_movies:
-        cur.execute('INSERT OR IGNORE INTO Movies (title) VALUES (?)', (movie,))
-    conn.commit()
-
 def setup_movies_table(cur, conn):
     cur.execute("""
         CREATE TABLE IF NOT EXISTS Movies (
@@ -148,6 +128,19 @@ def setup_movies_table(cur, conn):
     conn.commit()
 
 def populate_movies_table(cur, conn, movie_titles):
+    """
+    Populates the Movies table in the database with movie titles.
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    movie_titles: List of str
+        A list of movie titles to insert into the database.
+    """
+    setup_movies_table(cur, conn)
     for title in movie_titles:
         cur.execute("INSERT OR IGNORE INTO Movies (title) VALUES (?)", (title,))
     conn.commit()
@@ -155,7 +148,7 @@ def populate_movies_table(cur, conn, movie_titles):
 def main ():
     cur, conn = set_up_database()
     true_story_movies = get_true_story_movies()
-    populate_true_story_movies_table(cur, conn, true_story_movies)
+    populate_movies_table(cur, conn, true_story_movies)
 
     conn.close()
 

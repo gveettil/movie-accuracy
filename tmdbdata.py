@@ -82,25 +82,36 @@ def setup_tmdb_table(cur, conn):
 
 # Populate TMDB_Data (≤25 per run)
 
-def populate_tmdb_table(cur, conn):
+def populate_tmdb_table(cur, conn, limit=25):
     """
     Fetch TMDB data for up to 25 movies not yet processed.
     Satisfies rubric requirement.
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    limit: int
+        Maximum number of movies to process per run (default 25).
     """
 
-    # Get all movies from Movies table
-    cur.execute("SELECT id, title FROM Movies")
-    all_movies = cur.fetchall()
+    # Get movies that don't have TMDB data yet
+    cur.execute('''
+        SELECT id, title
+        FROM Movies
+        WHERE id NOT IN (SELECT movie_id FROM TMDB_Data)
+        LIMIT ?
+    ''', (limit,))
 
-    # Get processed movie IDs from TMDB_Data table
-    cur.execute("SELECT movie_id FROM TMDB_Data")
-    processed_ids = {row[0] for row in cur.fetchall()}
+    to_process = cur.fetchall()
 
-    # Filter movies needing TMDB data; cap at 25
-    to_process = [(mid, title) for mid, title in all_movies if mid not in processed_ids]
-    to_process = to_process[:25]
+    if not to_process:
+        print("All movies already have TMDB data!")
+        return
 
-    print(f"Processing {len(to_process)} new TMDB entries (max 25).")
+    print(f"Processing {len(to_process)} movies...")
 
     for movie_id, title in to_process:
         print(f"\nFetching TMDB for: {title}")
@@ -127,14 +138,22 @@ def populate_tmdb_table(cur, conn):
         conn.commit()
         print(f"  Saved TMDB data for '{title}'.")
         time.sleep(1)  # short break for tmdb api rate limit
+
     print("\nTMDB population run complete.")
+
+    # Show progress
+    cur.execute('SELECT COUNT(*) FROM TMDB_Data')
+    total_processed = cur.fetchone()[0]
+    cur.execute('SELECT COUNT(*) FROM Movies')
+    total_movies = cur.fetchone()[0]
+    print(f"Total progress: {total_processed}/{total_movies} movies have TMDB data.")
 
 
 
 def main():
     cur, conn = set_up_database()
     setup_tmdb_table(cur, conn)
-    populate_tmdb_table(cur, conn)
+    populate_tmdb_table(cur, conn, limit=25)
     conn.close()
 
 
