@@ -100,7 +100,7 @@ Musicians:
   History: 1 movies
 
 Other:
-  Drama: 108 movies
+  Drama: 107 movies
   History: 39 movies
   Thriller: 22 movies
   Action: 20 movies
@@ -108,7 +108,7 @@ Other:
   Romance: 17 movies
   Adventure: 14 movies
   War: 12 movies
-  Comedy: 10 movies
+  Comedy: 9 movies
   Family: 7 movies
   Music: 5 movies
   Fantasy: 4 movies
@@ -146,7 +146,7 @@ Politicians: $140.03M (based on 10 movies)
 Criminals: $131.35M (based on 5 movies)
 Military: $105.50M (based on 20 movies)
 Scientists: $105.29M (based on 10 movies)
-Other: $99.78M (based on 91 movies)
+Other: $100.45M (based on 90 movies)
 Athletes: $83.30M (based on 34 movies)
 Musicians: $79.24M (based on 5 movies)
 Artists & Writers: $73.94M (based on 8 movies)
@@ -230,8 +230,8 @@ Data for scatterplot showing box office performance over time.
   Max Revenue: $414.21M
 
 2011:
-  Movies: 12
-  Average Revenue: $68.49M
+  Movies: 11
+  Average Revenue: $71.15M
   Max Revenue: $216.60M
 
 2012:
@@ -265,9 +265,9 @@ Data for scatterplot showing box office performance over time.
   Max Revenue: $527.00M
 
 OVERALL STATISTICS:
-  Total movies with revenue data: 200
+  Total movies with revenue data: 199
   Year range: 1985 - 2017
-  Average revenue across all years: $98.75M
+  Average revenue across all years: $99.05M
   Highest revenue: $610.06M
 
 ============================================================

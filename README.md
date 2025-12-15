@@ -14,7 +14,7 @@ The project creates a SQLite database (`movies.db`) with the following **normali
 
 ### Core Tables:
 1. **Movies** (~250 rows) - Stores core movie information
-   - id, title, tmdb_id, release_date, revenue, overview
+   - id, title, tmdb_id, release_date (kept for backwards compatibility), revenue, overview
 
 2. **Genres** (~20 rows) - Stores unique genre names (no duplicates!)
    - id, name
@@ -28,13 +28,19 @@ The project creates a SQLite database (`movies.db`) with the following **normali
 5. **MovieCategories** (~250 rows) - Junction table linking movies to categories
    - id, movie_id, category_id
 
+6. **ReleaseDates** (~100-150 rows) - Stores unique release dates (no duplicates!)
+   - id, date
+
+7. **MovieReleaseDates** (~250 rows) - Junction table linking movies to release dates
+   - id, movie_id, release_date_id
+
 **Key Design Features:**
 - All data comes from TMDB API (single source)
-- No duplicate string data (genres and categories stored once, referenced via foreign keys)
+- No duplicate string data (genres, categories, and release dates stored once, referenced via foreign keys)
 - Tables have different row counts (proper normalization)
 - All data for one entity (movie) is in Movies table, not split across tables
 - Foreign keys enforce referential integrity
-- Both genres AND categories use the same normalized pattern (lookup table + junction table)
+- Genres, categories, AND release dates all use the same normalized pattern (lookup table + junction table)
 
 ---
 
@@ -45,26 +51,29 @@ The project creates a SQLite database (`movies.db`) with the following **normali
 
 **What it does:**
 - Uses Selenium to scrape https://www.imdb.com/list/ls021398170/
-- Handles infinite scroll to load all 250 movies
+- Handles infinite scroll to load movies
 - Creates Movies table with title field
-- Inserts all movie titles at once
+- Processes 25 movies per run (buffered batches)
+- Tracks progress and resumes from where it left off
 
-**How many times to run:** ONCE
-- Fetches all ~250 movies in a single run
-- Creates the foundation for the database
+**How many times to run:** MULTIPLE TIMES (10+ times to import all ~250 movies)
+- Processes 25 movies per run
+- Run until you see: "All movies have already been imported!"
 
 **Command:** `python importmovielist.py`
 
 ---
 
 ### 2. `tmdbdata.py` - TMDB Data Fetcher
-**Purpose:** Fetches detailed movie data from TMDB API for movies in the database and creates normalized genre structure.
+**Purpose:** Fetches detailed movie data from TMDB API for movies in the database and creates normalized genre and release date structures.
 
 **What it does:**
 - Searches TMDB for each movie title
 - Creates Genres and MovieGenres tables (normalized many-to-many structure)
+- Creates ReleaseDates and MovieReleaseDates tables (normalized many-to-many structure)
 - Updates Movies table with: tmdb_id, release_date, revenue, overview
 - Normalizes genre data (NO duplicate genre strings!)
+- Normalizes release date data (NO duplicate date strings!)
 - Processes 25 movies per run (API rate limiting)
 
 **How many times to run:** MULTIPLE TIMES (10+ times to fetch data for all ~250 movies)
@@ -129,8 +138,10 @@ The project creates a SQLite database (`movies.db`) with the following **normali
 Follow this order to run the project from scratch:
 
 ```bash
-# Step 1: Scrape IMDb for movie titles (run ONCE)
+# Step 1: Scrape IMDb for movie titles (run 10+ times until complete)
 python importmovielist.py
+python importmovielist.py
+# ... repeat until all ~250 movies are imported
 
 # Step 2: Fetch TMDB data for those movies (run 10+ times until complete)
 python tmdbdata.py

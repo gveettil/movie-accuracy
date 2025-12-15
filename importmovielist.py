@@ -36,10 +36,17 @@ def set_up_database():
     cur = conn.cursor()
     return cur, conn
 
-def get_true_story_movies():
+def get_true_story_movies(start_index=0, limit=25):
     """
     Scrapes a webpage to get a list of movies based on true stories from IMDb.
-    Uses Selenium to handle infinite scroll and fetch all 250 movies.
+    Uses Selenium to handle infinite scroll and fetches movies in batches.
+
+    Parameters
+    -----------------------
+    start_index: int
+        The starting index for movies to fetch (0-based).
+    limit: int
+        Maximum number of movies to fetch per run (default 25).
 
     Returns
     -----------------------
@@ -66,10 +73,11 @@ def get_true_story_movies():
         # Wait for the page to load
         time.sleep(3)
 
-        # Scroll to load all movies
-        print("Scrolling to load all movies...")
+        # Scroll to load enough movies to reach our target
+        print(f"Scrolling to load movies {start_index + 1} to {start_index + limit}...")
         last_height = driver.execute_script("return document.body.scrollHeight")
         movies_loaded = 0
+        target_count = start_index + limit
 
         while True:
             # Scroll down to the bottom
@@ -88,8 +96,8 @@ def get_true_story_movies():
             # Calculate new scroll height and compare with last scroll height
             new_height = driver.execute_script("return document.body.scrollHeight")
 
-            # Break if we've loaded all 250 movies or if no new content loaded
-            if current_count >= 250 or (new_height == last_height and current_count == movies_loaded):
+            # Break if we've loaded enough movies or if no new content loaded
+            if current_count >= target_count or (new_height == last_height and current_count == movies_loaded):
                 print(f"Finished loading. Total: {current_count} movies")
                 break
 
@@ -100,8 +108,9 @@ def get_true_story_movies():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         items = soup.find_all('li', class_='ipc-metadata-list-summary-item')
 
+        # Extract only the movies we need (start_index to start_index + limit)
         movies = []
-        for item in items:
+        for i, item in enumerate(items[start_index:start_index + limit]):
             title_tag = item.find('h3', class_='ipc-title__text')
             if title_tag is not None:
                 title = title_tag.text.strip()
@@ -110,7 +119,7 @@ def get_true_story_movies():
                     title = title.split('. ', 1)[1]
                 movies.append(title)
 
-        print(f"Total movies fetched: {len(movies)}")
+        print(f"Total movies fetched for this batch: {len(movies)}")
         return movies
 
     finally:
@@ -135,16 +144,16 @@ def setup_movies_table(cur, conn):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL UNIQUE,
             tmdb_id INTEGER UNIQUE,
-            release_date TEXT,
             revenue INTEGER,
             overview TEXT
         )
     """)
     conn.commit()
 
-def populate_movies_table(cur, conn, movie_titles):
+def populate_movies_table(cur, conn, limit=25):
     """
     Populates the Movies table in the database with movie titles ONLY.
+    Processes movies in batches to satisfy the ≤25 items per run requirement.
     TMDB data (genres, revenue, overview) will be fetched by tmdbdata.py
 
     Parameters
@@ -153,10 +162,29 @@ def populate_movies_table(cur, conn, movie_titles):
         The database cursor.
     conn: Connection
         The database connection.
-    movie_titles: List of str
-        A list of movie titles to insert into the database.
+    limit: int
+        Maximum number of movies to fetch per run (default 25).
     """
     setup_movies_table(cur, conn)
+
+    # Check how many movies we already have
+    cur.execute("SELECT COUNT(*) FROM Movies")
+    existing_count = cur.fetchone()[0]
+
+    # If we already have all ~250 movies, we're done
+    if existing_count >= 250:
+        print("All movies have already been imported!")
+        return
+
+    print(f"Current database has {existing_count} movies")
+    print(f"Fetching next batch of up to {limit} movies...")
+
+    # Fetch the next batch starting from where we left off
+    movie_titles = get_true_story_movies(start_index=existing_count, limit=limit)
+
+    if not movie_titles:
+        print("No more movies to fetch!")
+        return
 
     inserted = 0
     for title in movie_titles:
@@ -170,12 +198,18 @@ def populate_movies_table(cur, conn, movie_titles):
     print(f"Inserted {inserted} new movies")
     cur.execute("SELECT COUNT(*) FROM Movies")
     total = cur.fetchone()[0]
-    print(f"Total movies in database: {total}")
+    print(f"Total movies in database: {total}/~250")
+
+    if total < 250:
+        print(f"\nRun this script again to import the next batch!")
+    else:
+        print(f"\nAll movies imported! Next step: Run tmdbdata.py")
     print("="*60)
 
 def main():
     """
     Main function: Scrapes IMDb for true story movies and inserts titles into database.
+    Processes 25 movies per run.
     Run tmdbdata.py next to fetch detailed information from TMDB.
     """
     cur, conn = set_up_database()
@@ -183,10 +217,8 @@ def main():
     print("STEP 1: Scraping IMDb for True Story Movies")
     print("="*60)
 
-    true_story_movies = get_true_story_movies()
-    populate_movies_table(cur, conn, true_story_movies)
+    populate_movies_table(cur, conn, limit=25)
 
-    print("\nNext step: Run tmdbdata.py to fetch details from TMDB API")
     conn.close()
 
 if __name__ == "__main__":

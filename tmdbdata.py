@@ -29,6 +29,8 @@ def setup_tables(cur, conn):
     Creates the normalized database schema for TMDB data:
     - Genres: Unique genre names (no duplicate strings!)
     - MovieGenres: Junction table for many-to-many relationship
+    - ReleaseDates: Unique release dates (no duplicate strings!)
+    - MovieReleaseDates: Junction table for many-to-many relationship
 
     Parameters
     -----------------------
@@ -54,6 +56,26 @@ def setup_tables(cur, conn):
             FOREIGN KEY (movie_id) REFERENCES Movies(id),
             FOREIGN KEY (genre_id) REFERENCES Genres(id),
             UNIQUE(movie_id, genre_id)
+        )
+    """)
+
+    # ReleaseDates table - stores unique release dates (no duplicate strings!)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS ReleaseDates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # MovieReleaseDates junction table - links movies to release dates
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS MovieReleaseDates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            movie_id INTEGER NOT NULL,
+            release_date_id INTEGER NOT NULL,
+            FOREIGN KEY (movie_id) REFERENCES Movies(id),
+            FOREIGN KEY (release_date_id) REFERENCES ReleaseDates(id),
+            UNIQUE(movie_id, release_date_id)
         )
     """)
 
@@ -142,6 +164,38 @@ def insert_or_get_genre(cur, conn, genre_name):
     return cur.lastrowid
 
 
+def insert_or_get_release_date(cur, conn, release_date):
+    """
+    Inserts a release date into the ReleaseDates table if it doesn't exist,
+    and returns the release date's ID.
+    This ensures NO DUPLICATE release date strings in the database.
+
+    Parameters
+    -----------------------
+    cur: Cursor
+        The database cursor.
+    conn: Connection
+        The database connection.
+    release_date: str
+        The release date string.
+
+    Returns
+    -----------------------
+    int: The release date's ID
+    """
+    # Try to get existing release date
+    cur.execute("SELECT id FROM ReleaseDates WHERE date = ?", (release_date,))
+    result = cur.fetchone()
+
+    if result:
+        return result[0]
+
+    # Insert new release date
+    cur.execute("INSERT INTO ReleaseDates (date) VALUES (?)", (release_date,))
+    conn.commit()
+    return cur.lastrowid
+
+
 def populate_tmdb_data(cur, conn, limit=25):
     """
     Fetches TMDB data for movies that don't have it yet.
@@ -190,17 +244,15 @@ def populate_tmdb_data(cur, conn, limit=25):
         time.sleep(0.25)  # Rate limiting
         details = tmdb_get_movie_details(tmdb_id)
 
-        # Update Movies table with TMDB data
+        # Update Movies table with TMDB data (release_date now stored in ReleaseDates table)
         cur.execute("""
             UPDATE Movies
             SET tmdb_id = ?,
-                release_date = ?,
                 revenue = ?,
                 overview = ?
             WHERE id = ?
         """, (
             details.get('id'),
-            details.get('release_date'),
             details.get('revenue', 0),
             details.get('overview'),
             movie_id
@@ -219,6 +271,18 @@ def populate_tmdb_data(cur, conn, limit=25):
                 VALUES (?, ?)
             """, (movie_id, genre_id))
 
+        # Insert release date using normalized structure (no duplicate strings!)
+        release_date = details.get('release_date')
+        if release_date:
+            # Get or create release date (ensures uniqueness)
+            release_date_id = insert_or_get_release_date(cur, conn, release_date)
+
+            # Link movie to release date
+            cur.execute("""
+                INSERT OR IGNORE INTO MovieReleaseDates (movie_id, release_date_id)
+                VALUES (?, ?)
+            """, (movie_id, release_date_id))
+
         conn.commit()
         processed += 1
         print(f"  ✓ Saved: {details.get('title')} with {len(genres)} genres")
@@ -234,11 +298,17 @@ def populate_tmdb_data(cur, conn, limit=25):
     cur.execute("SELECT COUNT(*) FROM Genres")
     total_genres = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM MovieGenres")
-    total_links = cur.fetchone()[0]
+    total_genre_links = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM ReleaseDates")
+    total_release_dates = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM MovieReleaseDates")
+    total_date_links = cur.fetchone()[0]
 
     print(f"Total progress: {total_with_tmdb}/{total_movies} movies have TMDB data")
     print(f"Total unique genres: {total_genres}")
-    print(f"Total movie-genre links: {total_links}")
+    print(f"Total movie-genre links: {total_genre_links}")
+    print(f"Total unique release dates: {total_release_dates}")
+    print(f"Total movie-release date links: {total_date_links}")
     print("="*60)
 
 

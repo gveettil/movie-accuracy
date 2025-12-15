@@ -181,18 +181,20 @@ def create_visualization_3(cur):
 def create_visualization_4(cur):
     """
     Visualization 4: Line plot of average revenue by release year.
-    Uses Movies table instead of TMDB_Data.
+    Uses normalized ReleaseDates and MovieReleaseDates tables.
     """
     print("Creating Visualization 4: Average Revenue by Release Year")
 
-    # Get average revenue by year
+    # Get average revenue by year using normalized ReleaseDates table
     cur.execute('''
-        SELECT CAST(substr(m.release_date, 1, 4) AS INTEGER) as year,
+        SELECT CAST(substr(rd.date, 1, 4) AS INTEGER) as year,
                AVG(m.revenue) / 1000000.0 as avg_revenue_millions,
                COUNT(*) as movie_count
         FROM Movies m
+        JOIN MovieReleaseDates mrd ON m.id = mrd.movie_id
+        JOIN ReleaseDates rd ON mrd.release_date_id = rd.id
         WHERE m.revenue > 0
-        AND m.release_date IS NOT NULL AND m.release_date != ''
+        AND rd.date IS NOT NULL AND rd.date != ''
         GROUP BY year
         ORDER BY year
     ''')

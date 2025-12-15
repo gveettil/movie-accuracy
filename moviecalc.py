@@ -372,15 +372,17 @@ def calculate_statistics(cur, conn):
         f.write("-" * 60 + "\n")
         f.write("Data for scatterplot showing box office performance over time.\n\n")
 
-        # Get all movies with revenue and release year
+        # Get all movies with revenue and release year using normalized ReleaseDates table
         cur.execute('''
-            SELECT m.title, CAST(substr(m.release_date, 1, 4) AS INTEGER) as year,
+            SELECT m.title, CAST(substr(rd.date, 1, 4) AS INTEGER) as year,
                    m.revenue / 1000000.0 as revenue_millions, c.name
             FROM Movies m
+            JOIN MovieReleaseDates mrd ON m.id = mrd.movie_id
+            JOIN ReleaseDates rd ON mrd.release_date_id = rd.id
             LEFT JOIN MovieCategories mc ON m.id = mc.movie_id
             LEFT JOIN Categories c ON mc.category_id = c.id
             WHERE m.revenue > 0
-            AND m.release_date IS NOT NULL AND m.release_date != ''
+            AND rd.date IS NOT NULL AND rd.date != ''
             ORDER BY year, revenue_millions DESC
         ''')
 

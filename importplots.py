@@ -141,8 +141,7 @@ def get_wikipedia_plot(movie_title):
                 if plot_text:
                     return ' '.join(plot_text)
 
-            # If no plot found on a 200 response, it might be a disambiguation page
-            # Fall through to search
+
 
         # If we got 404 or no plot was found, try searching
         if response.status_code == 404 or response.status_code == 200:
