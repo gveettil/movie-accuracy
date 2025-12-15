@@ -31,7 +31,7 @@ def create_visualization_1(cur):
     counts = [row[1] for row in data]
 
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(categories, counts)
+    bars = plt.bar(categories, counts, color='#ff7f0e')  # Orange color
     plt.xlabel('Subject Category')
     plt.ylabel('Number of Movies')
     plt.title('Count of Movies by Subject Category')
@@ -107,12 +107,15 @@ def create_visualization_2(cur):
     # Create stacked bar chart
     plt.figure(figsize=(12, 7))
 
+    # Use colors excluding default blue
+    colors = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
     x = np.arange(len(sorted_categories))
     width = 0.6
     bottom = np.zeros(len(sorted_categories))
 
-    for genre in top_genre_names:
-        plt.bar(x, data_for_plot[genre], width, label=genre, bottom=bottom)
+    for i, genre in enumerate(top_genre_names):
+        plt.bar(x, data_for_plot[genre], width, label=genre, bottom=bottom, color=colors[i % len(colors)])
         bottom += np.array(data_for_plot[genre])
 
     # Add total count annotations on top of stacked bars
@@ -157,7 +160,7 @@ def create_visualization_3(cur):
     movie_counts = [row[2] for row in data]
 
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(categories, revenues)
+    bars = plt.bar(categories, revenues, color='#2ca02c')  # Green color
     plt.xlabel('Subject Category')
     plt.ylabel('Average Revenue (Millions USD)')
     plt.title('Average Revenue by Subject Category')
@@ -206,7 +209,7 @@ def create_visualization_4(cur):
 
     # Create line plot
     plt.figure(figsize=(12, 7))
-    plt.plot(years, avg_revenues, marker='o', linewidth=2, markersize=6)
+    plt.plot(years, avg_revenues, marker='o', linewidth=2, markersize=6, color='#d62728')  # Red color
 
     plt.xlabel('Release Year')
     plt.ylabel('Average Revenue (Millions USD)')
