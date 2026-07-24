@@ -1,0 +1,7 @@
+beautifulsoup4
+selenium
+webdriver-manager
+requests
+matplotlib
+numpy
+google-genai
