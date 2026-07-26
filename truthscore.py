@@ -97,6 +97,28 @@ def get_real_subjects_text(cur, movie_id):
     return "\n\n".join(f"[{subject_type}] {title}: {summary}" for subject_type, title, summary in rows)
 
 
+def _is_genuine_quota_exhaustion(e):
+    """
+    Distinguishes a real, resettable quota exhaustion (the daily/per-minute
+    request cap, which always includes a QuotaFailure violation with a
+    specific quotaId) from a 429 that just means a feature isn't usable at
+    all on this tier -- e.g. Google Search grounding, which returns a
+    generic 429 with no quota details and will never succeed no matter how
+    long the batch waits or retries.
+
+    Parameters
+    -----------------------
+    e: genai_errors.APIError
+
+    Returns
+    -----------------------
+    bool: True if this is a genuine, resettable quota error.
+    """
+    details = getattr(e, 'details', None) or {}
+    error_details = details.get('error', {}).get('details', [])
+    return any(d.get('@type', '').endswith('QuotaFailure') for d in error_details)
+
+
 def _extract_json_object(text):
     """
     Extracts a JSON object from an LLM response, tolerating markdown code
@@ -234,9 +256,12 @@ Respond with ONLY a JSON object, no other text, in this exact format:
             ),
         )
     except genai_errors.APIError as e:
-        if e.code == 429:
+        if e.code == 429 and _is_genuine_quota_exhaustion(e):
             raise GeminiRateLimitError(str(e))
-        print(f"  Gemini API error getting consensus for '{movie_title}': {e}")
+        if e.code == 429:
+            print(f"  Consensus scoring unavailable for '{movie_title}' -- Google Search grounding appears unsupported on this tier: {e}")
+        else:
+            print(f"  Gemini API error getting consensus for '{movie_title}': {e}")
         return None
 
     if response.text is None:

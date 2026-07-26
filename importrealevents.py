@@ -313,12 +313,16 @@ def identify_real_subjects_with_llm(movie_title, overview):
 
 {overview}
 
-Identify the real-world subject(s) this film is based on -- at most 3, focused on the most central person, event, or place. For each, give its real name (not the movie title) and classify it as one of: Person, Event, Place.
+Identify the real-world subject(s) this film is based on -- at most 3, focused on the most central person, event, or place -- but ONLY if the overview gives a specific, distinguishing detail (a real name, a named event, a specific date/place/organization) that lets you confidently pin down which actual person, event, or place is meant.
+
+Do NOT guess based on a generic role or description alone (e.g. "an admiral", "a scientist", "a boxer") when no specific identifying detail is given -- a vague description matches too many real people or events to identify correctly, and a confident-sounding wrong guess is worse than no guess. Treat those cases as unidentifiable.
+
+For each subject you ARE confident about, give its real name (not the movie title) and classify it as one of: Person, Event, Place.
 
 Respond with ONLY a JSON array, no other text, in this exact format:
 [{{"name": "...", "type": "Person"}}, ...]
 
-If no real-world subject can be identified, respond with: []"""
+If no real-world subject can be confidently identified, respond with exactly: []"""
 
     time.sleep(GEMINI_SECONDS_BETWEEN_CALLS)
 
@@ -569,6 +573,7 @@ def populate_real_subjects_table(cur, conn, limit=25):
                 ''', (movie_id,))
                 continue
 
+            any_linked = False
             for subject in subjects:
                 name = subject.get('name')
                 subject_type = (subject.get('type') or '').strip().capitalize()
@@ -578,6 +583,19 @@ def populate_real_subjects_table(cur, conn, limit=25):
                 print(f"  Resolving: {name} ({subject_type})")
                 if resolve_and_store_real_subject(cur, conn, movie_id, title, name, subject_type):
                     linked_count += 1
+                    any_linked = True
+
+            # If subjects were identified but every one of them failed to
+            # resolve (e.g. a persistent safety-filter block on the article
+            # content), still mark this movie as checked -- otherwise it
+            # gets retried every run, repeatedly re-hitting the same
+            # unrecoverable failure for no benefit.
+            if not any_linked:
+                print(f"  No subjects could be resolved for '{title}'")
+                cur.execute('''
+                    INSERT OR IGNORE INTO MovieRealSubjects (movie_id, subject_id)
+                    VALUES (?, NULL)
+                ''', (movie_id,))
         except GeminiRateLimitError as e:
             print(f"\nGemini rate limit hit, stopping this run early: {e}")
             break
