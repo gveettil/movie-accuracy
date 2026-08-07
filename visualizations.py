@@ -223,6 +223,92 @@ def create_visualization_4(cur):
     plt.close()
 
 
+def create_visualization_5(cur):
+    """
+    Visualization 5: Distribution of Truth Index scores across all scored movies.
+    Uses the TruthScores table. Plotted as a bar chart over the score's actual
+    discrete values (the formula only produces a handful of possible results,
+    since it's a sum of small integer sub-scores) rather than a continuous
+    histogram, which would bin them awkwardly.
+    """
+    print("Creating Visualization 5: Truth Index Distribution")
+
+    cur.execute('''
+        SELECT truth_index, COUNT(*) as movie_count
+        FROM TruthScores
+        GROUP BY truth_index
+        ORDER BY truth_index
+    ''')
+
+    data = cur.fetchall()
+    scores = [row[0] for row in data]
+    counts = [row[1] for row in data]
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar([str(s) for s in scores], counts, color='#2a78d6', width=0.6)
+    plt.xlabel('Truth Index (0 = fully fabricated, 100 = fully accurate)')
+    plt.ylabel('Number of Movies')
+    plt.title('Distribution of Truth Index Scores')
+
+    for bar, count in zip(bars, counts):
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2., height,
+                f'n={count}',
+                ha='center', va='bottom', fontsize=8)
+
+    plt.tight_layout()
+
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visualization_5_truth_index_distribution.png')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved: {output_path}")
+    plt.close()
+
+
+def create_visualization_6(cur):
+    """
+    Visualization 6: Average Truth Index by subject category.
+    Uses normalized Categories/MovieCategories tables joined with TruthScores,
+    mirroring the style of Visualization 3 (average revenue by category) but
+    for historical accuracy instead of box office performance.
+    """
+    print("Creating Visualization 6: Average Truth Index by Subject Category")
+
+    cur.execute('''
+        SELECT c.name, AVG(ts.truth_index) as avg_truth_index, COUNT(*) as movie_count
+        FROM TruthScores ts
+        JOIN MovieCategories mc ON ts.movie_id = mc.movie_id
+        JOIN Categories c ON mc.category_id = c.id
+        GROUP BY c.name
+        ORDER BY avg_truth_index DESC
+    ''')
+
+    data = cur.fetchall()
+    categories = [row[0] for row in data]
+    avg_scores = [row[1] for row in data]
+    movie_counts = [row[2] for row in data]
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(categories, avg_scores, color='#4a3aa7')
+    plt.xlabel('Subject Category')
+    plt.ylabel('Average Truth Index')
+    plt.title('Average Truth Index by Subject Category')
+    plt.xticks(rotation=45, ha='right')
+    plt.ylim(0, 100)
+
+    for bar, count in zip(bars, movie_counts):
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2., height,
+                f'n={count}',
+                ha='center', va='bottom', fontsize=8)
+
+    plt.tight_layout()
+
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visualization_6_truth_index_by_category.png')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved: {output_path}")
+    plt.close()
+
+
 def main():
     print("="*60)
     print("CREATING VISUALIZATIONS FOR MOVIE DATA")
@@ -238,6 +324,10 @@ def main():
         create_visualization_3(cur)
         print()
         create_visualization_4(cur)
+        print()
+        create_visualization_5(cur)
+        print()
+        create_visualization_6(cur)
 
         print("\n" + "="*60)
         print("ALL VISUALIZATIONS CREATED SUCCESSFULLY!")

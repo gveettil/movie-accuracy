@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import time
+import re
 import requests
 from google import genai
 from google.genai import errors as genai_errors
@@ -148,33 +149,81 @@ def get_wikipedia_article_text(article_title):
         return None
 
 
-def get_wikipedia_text_for_movie(movie_title):
+def extract_wikipedia_article_year(article_text):
+    """
+    Extracts the release year a Wikipedia film article states about itself,
+    from its opening sentence (e.g. "X is a 2006 Hong Kong martial arts
+    film..."). Used to verify we fetched the right article when multiple
+    unrelated films share an exact title (e.g. two different movies both
+    called "Fearless").
+
+    Parameters
+    -----------------------
+    article_text: str
+        The full plain-text Wikipedia article.
+
+    Returns
+    -----------------------
+    int or None: The stated year, or None if no year could be found in the
+        opening of the article.
+    """
+    opening = article_text[:400]
+    match = re.search(r'\bis an?\b.{0,40}?\b(19\d{2}|20\d{2})\b', opening)
+    if match:
+        return int(match.group(1))
+
+    match = re.search(r'\b(19\d{2}|20\d{2})\b', opening)
+    return int(match.group(1)) if match else None
+
+
+def get_wikipedia_text_for_movie(movie_title, release_year=None):
     """
     Finds the Wikipedia article for a movie and returns its full plain text.
-    Searches with a "film" qualifier first, since a literal title lookup
-    often lands on an unrelated, more prominent article for short or common
-    titles (e.g. "42", "300", "Ali", "Attila"). Falls back to a direct
-    title lookup if the search finds nothing.
+    Tries, in order: the "(<year> film)" disambiguated title (Wikipedia's
+    standard convention when multiple films share a title), the top search
+    result (qualified with "film"), then a literal direct title lookup.
+    When release_year is known, each candidate's stated year is checked
+    against it -- this catches cases where an unrelated same-titled film
+    would otherwise be silently accepted (e.g. "Fearless" the 1993 plane
+    crash drama vs. "Fearless" the 2006 martial arts film).
 
     Parameters
     -----------------------
     movie_title: str
         The title of the movie.
+    release_year: int or None
+        The movie's real release year (from TMDB), if known, for
+        year-of-release verification.
 
     Returns
     -----------------------
     str or None:
-        The matched article's plain text, or None if no article was found.
+        The matched article's plain text, or None if no verified article
+        was found.
     """
+    candidate_titles = []
+    if release_year:
+        candidate_titles.append(f"{movie_title} ({release_year} film)")
+
     search_result = search_wikipedia(movie_title)
     if search_result:
-        text = get_wikipedia_article_text(search_result)
-        if text:
+        candidate_titles.append(search_result)
+
+    candidate_titles.append(movie_title)
+
+    for candidate_title in candidate_titles:
+        text = get_wikipedia_article_text(candidate_title)
+        if not text:
+            continue
+
+        if release_year is None:
             return text
 
-    text = get_wikipedia_article_text(movie_title)
-    if text:
-        return text
+        found_year = extract_wikipedia_article_year(text)
+        if found_year is None or abs(found_year - release_year) <= 1:
+            return text
+
+        print(f"  '{candidate_title}' states {found_year}, expected {release_year} -- likely a different film with the same title, trying next candidate")
 
     print(f"  Wikipedia page not found for: {movie_title}")
     return None
@@ -258,9 +307,11 @@ def populate_plots_table(cur, conn, limit=25):
         Maximum number of plots to fetch per run (default 25).
     """
     cur.execute('''
-        SELECT id, title
-        FROM Movies
-        WHERE id NOT IN (SELECT movie_id FROM Plots WHERE plot_summary IS NOT NULL)
+        SELECT m.id, m.title, CAST(substr(rd.date, 1, 4) AS INTEGER) as release_year
+        FROM Movies m
+        LEFT JOIN MovieReleaseDates mrd ON m.id = mrd.movie_id
+        LEFT JOIN ReleaseDates rd ON mrd.release_date_id = rd.id
+        WHERE m.id NOT IN (SELECT movie_id FROM Plots WHERE plot_summary IS NOT NULL)
         LIMIT ?
     ''', (limit,))
 
@@ -273,9 +324,9 @@ def populate_plots_table(cur, conn, limit=25):
     print(f"Processing {len(movies_to_process)} movies...")
 
     successful = 0
-    for movie_id, title in movies_to_process:
+    for movie_id, title, release_year in movies_to_process:
         print(f"Fetching plot for: {title}")
-        article_text = get_wikipedia_text_for_movie(title)
+        article_text = get_wikipedia_text_for_movie(title, release_year)
 
         plot = None
         if article_text:
